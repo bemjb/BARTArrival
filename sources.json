@@ -1,0 +1,10 @@
+[
+    {"source": "lib/xml2json.js"},
+    {"source": "lib/latlon.js"},
+    {"source": "app/assistants/stage-assistant.js"},
+    {"source": "app/models/station-geoloc.js"},
+    {
+        "scenes": "main",
+        "source": "app/assistants/main-assistant.js"
+    }
+]

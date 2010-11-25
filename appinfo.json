@@ -1,0 +1,9 @@
+{
+	"id": "com.pyen.bart.arrival",
+	"version": "0.0.1",
+	"vendor": "Pyen",
+	"type": "web",
+	"main": "index.html",
+	"title": "BART Arrival",
+	"icon": "icon.png"
+}
