@@ -65,7 +65,7 @@ MainAssistant.prototype.locateClosestStation = function() {
         parameters: {
             accuracy: 2,
             maximumAge: 30,
-            responseTime: 1
+            responseTime: 2
         },
         onSuccess: this.gotLocation.bind(this),
         onFailure: this.failedLocation.bind(this)
