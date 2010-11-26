@@ -1,0 +1,4 @@
+BARTArrival - App for BART train arrival times for WebOS
+
+To build this, you need the WebOS SDK from http://developer.palm.com/, and you
+just need to run 'palm-package' on the src directory to get an ipk.
