@@ -205,6 +205,7 @@ MainAssistant.prototype.failedLocation = function(result) {
         // error code 7 is when this application already has a message. It
         // shouldn't ever happen with this application, but if so, we'll ignore
         // this failure and let the previous message go through.
+        this.stopSpinner();
     }
     // if the current station is set to something other than CLOSEST,
     // then the user has chosen a station manually, and doesn't care if this
