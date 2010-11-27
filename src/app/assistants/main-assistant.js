@@ -26,8 +26,6 @@ function MainAssistant() {
         "This application has been blacklisted."
     ];
     
-    this.currentStation = 'CLOSEST';
-
     // Set up station model
     var choices = [];
     for (var abbr in StationGeoLoc) {
@@ -40,7 +38,7 @@ function MainAssistant() {
         else /* a.label < b.label */ return -1;
     });
     choices.unshift({ label: "Closest station", "value": "CLOSEST" });
-    this.stationModel = { "value": this.currentStation, "disabled": false, "choices": choices };
+    this.stationModel = { value: 'CLOSEST', disabled: false, choices: choices };
 
     this.stationInfoModel = {
         items: [ {
@@ -110,6 +108,8 @@ MainAssistant.prototype.stationChange = function(event) {
         this.locateClosestStation();
     }
     else {
+        this.infoMessage("", "Getting train information for " + StationGeoLoc[this.stationModel.value].name);
+        this.startSpinner();
         var req = new Ajax.Request(
             "http://api.bart.gov/api/etd.aspx?cmd=etd&orig=" + stationAbbr + "&key=MW9S-E7SL-26DU-VV8V",
             {
@@ -123,8 +123,6 @@ MainAssistant.prototype.stationChange = function(event) {
 };
 
 MainAssistant.prototype.updateEtaDisplay = function(response) {
-    this.currentStation = this.stationModel.value;
-
     var json = XML2JSON.convert(response.responseXML);
     var etds = json.root[0].station[0].etd;
     // sort by direction so that trains are grouped nicely in the display.
@@ -166,11 +164,10 @@ MainAssistant.prototype.failedToGetEta = function(response) {
 };
 
 MainAssistant.prototype.gotLocation = function(result) {
-    if (this.currentStation == 'CLOSEST') {
+    if (this.stationModel.value == 'CLOSEST') {
         var latLon = new LatLon(result.latitude, result.longitude);
         var station = this.findClosestStation(latLon);
         Mojo.Log.info("The closest station to %s is %j", latLon.toString('d'), station);
-        this.currentStation = station.info.abbr;
         this.stationModel.value = station.info.abbr;
         this.controller.modelChanged(this.stationModel);
         this.stationChange();
@@ -195,7 +192,7 @@ MainAssistant.prototype.findClosestStation = function(currentLoc) {
 };
 
 MainAssistant.prototype.failedLocation = function(result) {
-    if (this.currentStation == 'CLOSEST') {
+    if (this.stationModel.value == 'CLOSEST') {
         if (result.errorCode != 7) {
             this.infoMessage(
                 "Error!",
