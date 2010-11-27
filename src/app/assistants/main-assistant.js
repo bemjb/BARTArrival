@@ -102,14 +102,13 @@ MainAssistant.prototype.locateClosestStation = function() {
 
 MainAssistant.prototype.stationChange = function(event) {
     var stationAbbr = this.stationModel.value;
+    this.startSpinner();
     if (stationAbbr == 'CLOSEST') {
         this.infoMessage("", "Acquiring current location to determine the closest station. If you do not wish to wait, you can select a station manually.");
-        this.startSpinner();
         this.locateClosestStation();
     }
     else {
         this.infoMessage("", "Getting train information for " + StationGeoLoc[this.stationModel.value].name);
-        this.startSpinner();
         var req = new Ajax.Request(
             "http://api.bart.gov/api/etd.aspx?cmd=etd&orig=" + stationAbbr + "&key=MW9S-E7SL-26DU-VV8V",
             {
