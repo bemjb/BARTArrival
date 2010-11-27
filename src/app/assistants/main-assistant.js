@@ -41,6 +41,13 @@ function MainAssistant() {
     });
     choices.unshift({ label: "Closest station", "value": "CLOSEST" });
     this.stationModel = { "value": this.currentStation, "disabled": false, "choices": choices };
+
+    this.stationInfoModel = {
+        items: [ {
+            dest: '',
+            info: "Acquiring current location to determine the closest station. If you do not wish to wait, you can select a station manually."
+        } ]
+    };
 }
 
 MainAssistant.prototype.setup = function() {
@@ -49,10 +56,26 @@ MainAssistant.prototype.setup = function() {
     /* use Mojo.View.render to render view templates and add them to the scene, if needed */
     
     /* setup widgets here */
-    this.controller.setupWidget("stations", { "label": "Station" }, this.stationModel);
+    this.controller.setupWidget("stations", { label: "Station" }, this.stationModel);
+
+    this.controller.setupWidget(
+        "stationInfo",
+        {
+            fixedHeightItems: false,
+            listTemplate: "main/station-info-list-template",
+            itemTemplate: "main/station-info-item-template",
+            hasNoWidgets: true
+        },
+        this.stationInfoModel
+    );
+    this.stationInfoElement = this.controller.get("stationInfo");
 
     /* add event handlers to listen to events from widgets */
-    Mojo.Event.listen(this.controller.get("stations"), Mojo.Event.propertyChange, this.stationChange.bind(this));
+    Mojo.Event.listen(
+        this.controller.get("stations"),
+        Mojo.Event.propertyChange,
+        this.stationChange.bind(this)
+    );
 
     this.locateClosestStation();
 };
@@ -75,7 +98,7 @@ MainAssistant.prototype.locateClosestStation = function() {
 MainAssistant.prototype.stationChange = function(event) {
     var stationAbbr = this.stationModel.value;
     if (stationAbbr == 'CLOSEST') {
-        this.infoMessage("Acquiring current location to determine the closest station. If you do not wish to wait, you can select a station manually.");
+        this.infoMessage("", "Acquiring current location to determine the closest station. If you do not wish to wait, you can select a station manually.");
         this.locateClosestStation();
     }
     else {
@@ -94,21 +117,41 @@ MainAssistant.prototype.stationChange = function(event) {
 MainAssistant.prototype.updateEtaDisplay = function(response) {
     this.currentStation = this.stationModel.value;
 
-    var generatedHTML = '';
     var json = XML2JSON.convert(response.responseXML);
-    json.root[0].station[0].etd.forEach(function(etd) {
-        generatedHTML += "<p><b>" + etd.destination[0] + "</b><ul>";
-        etd.estimate.forEach(function(estimate) {
-            generatedHTML += "<li> In " + estimate.minutes[0] + " minutes, " +
-                estimate.length[0] + " car train</li>";
-        });
-        generatedHTML += "</ul></p>";
+    var etds = json.root[0].station[0].etd;
+    // sort by direction so that trains are grouped nicely in the display.
+    etds.sort(function(a,b) {
+        // why direction is part of the estimate, I'll never know. You'd figure
+        // that if a train is going to a given destination, the direction will
+        // always be the same.
+        var aDir = a.estimate[0].direction[0];
+        var bDir = b.estimate[0].direction[0];
+        if (aDir == bDir) return 0;
+        else if (aDir > bDir) return 1;
+        else /* aDir < bDir */ return -1;
     });
-    this.controller.get("stationInfo").innerHTML = generatedHTML;
+    // actually build display
+    var listItems = etds.map(function(etd) {
+        var item = { };
+        item.dest = etd.destination[0];
+        item.info = "<ul>";
+        etd.estimate.forEach(function(estimate) {
+            item.info += "<li>" + estimate.minutes[0].escapeHTML() +
+                (estimate.minutes[0] == "Arrived"?", ":" mins, ") +
+                + estimate.length[0].escapeHTML() + " cars, platform " +
+                estimate.platform[0].escapeHTML() + "</li>";
+        });
+        item.info += "</ul>";
+        return item;
+    });
+    this.stationInfoModel.items = listItems;
+    this.controller.modelChanged(this.stationInfoModel);
+    this.stationInfoElement.mojo.noticeUpdatedItems(0, this.stationInfoModel.items);
+    this.stationInfoElement.mojo.setLength(this.stationInfoModel.items.length);
 };
 
 MainAssistant.prototype.failedToGetEta = function(response) {
-    this.infoMessage(
+    this.infoMessage("Error!",
         "<p>" + response.status + " " + response.statusText.escapeHTML() + "</p>" +
         "<p>" + response.responseText.escapeHTML + "</p>"
     );
@@ -146,7 +189,10 @@ MainAssistant.prototype.findClosestStation = function(currentLoc) {
 MainAssistant.prototype.failedLocation = function(result) {
     if (this.currentStation == 'CLOSEST') {
         if (result.errorCode != 7) {
-            this.infoMessage("Failed to get location: " + this.locationErrorMessages[result.errorCode]);
+            this.infoMessage(
+                "Error!",
+                "Failed to get location: " + this.locationErrorMessages[result.errorCode]
+            );
         }
         // error code 7 is when this application already has a message. It
         // shouldn't ever happen with this application, but if so, we'll ignore
@@ -157,8 +203,13 @@ MainAssistant.prototype.failedLocation = function(result) {
     // failed.
 };
 
-MainAssistant.prototype.infoMessage = function(message) {
-    this.controller.get("stationInfo").innerHTML = message;
+MainAssistant.prototype.infoMessage = function(title, message) {
+    this.stationInfoModel.items = [
+        { dest: title, info: message }
+    ];
+    this.controller.modelChanged(this.stationInfoModel);
+    this.stationInfoElement.mojo.noticeUpdatedItems(0, this.stationInfoModel.items);
+    this.stationInfoElement.mojo.setLength(this.stationInfoModel.items.length);
 };
 
 MainAssistant.prototype.activate = function(event) {
