@@ -1,6 +1,6 @@
 {
 	"id": "com.pyen.bart.arrival",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"vendor": "Pyen",
 	"type": "web",
 	"main": "index.html",
