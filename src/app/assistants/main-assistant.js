@@ -70,6 +70,13 @@ MainAssistant.prototype.setup = function() {
     );
     this.stationInfoElement = this.controller.get("stationInfo");
 
+    this.controller.setupWidget(
+        "progressSpinner",
+        { spinnerSize: "large" },
+        { spinning: true }
+    );
+    this.spinnerElement = this.controller.get("progressSpinner");
+
     /* add event handlers to listen to events from widgets */
     Mojo.Event.listen(
         this.controller.get("stations"),
@@ -99,6 +106,7 @@ MainAssistant.prototype.stationChange = function(event) {
     var stationAbbr = this.stationModel.value;
     if (stationAbbr == 'CLOSEST') {
         this.infoMessage("", "Acquiring current location to determine the closest station. If you do not wish to wait, you can select a station manually.");
+        this.startSpinner();
         this.locateClosestStation();
     }
     else {
@@ -145,9 +153,8 @@ MainAssistant.prototype.updateEtaDisplay = function(response) {
         return item;
     });
     this.stationInfoModel.items = listItems;
-    this.controller.modelChanged(this.stationInfoModel);
-    this.stationInfoElement.mojo.noticeUpdatedItems(0, this.stationInfoModel.items);
-    this.stationInfoElement.mojo.setLength(this.stationInfoModel.items.length);
+    this.stationInfoModelChanged();
+    this.stopSpinner();
 };
 
 MainAssistant.prototype.failedToGetEta = function(response) {
@@ -155,6 +162,7 @@ MainAssistant.prototype.failedToGetEta = function(response) {
         "<p>" + response.status + " " + response.statusText.escapeHTML() + "</p>" +
         "<p>" + response.responseText.escapeHTML + "</p>"
     );
+    this.stopSpinner();
 };
 
 MainAssistant.prototype.gotLocation = function(result) {
@@ -207,9 +215,23 @@ MainAssistant.prototype.infoMessage = function(title, message) {
     this.stationInfoModel.items = [
         { dest: title, info: message }
     ];
+    this.stationInfoModelChanged();
+};
+
+MainAssistant.prototype.stationInfoModelChanged = function() {
     this.controller.modelChanged(this.stationInfoModel);
     this.stationInfoElement.mojo.noticeUpdatedItems(0, this.stationInfoModel.items);
     this.stationInfoElement.mojo.setLength(this.stationInfoModel.items.length);
+};
+
+MainAssistant.prototype.startSpinner = function() {
+    this.spinnerElement.mojo.start();
+    this.spinnerElement.style.display = 'block';
+};
+
+MainAssistant.prototype.stopSpinner = function() {
+    this.spinnerElement.mojo.stop();
+    this.spinnerElement.style.display = 'none';
 };
 
 MainAssistant.prototype.activate = function(event) {
