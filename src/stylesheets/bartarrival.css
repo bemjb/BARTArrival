@@ -1,6 +1,87 @@
-div#progressSpinner {
+#main {
+    background: white;
+    position: fixed;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+}
+
+#stationSelector {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    z-index: 1;
+    padding-top: 10px;
+    padding-right: 5px;
+    padding-left: 5px;
+    padding-bottom: 0px;
+    margin-top: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-bottom: 5px;
+    background: #70b1ee;
+    border-bottom-style: solid;
+    border-color: #70b1ee;
+    border-width: medium;
+}
+
+#timestamp {
+    font-size: 10pt;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+#stations {
+    margin-left: 8px;
+    width: 235px;
+    display: inline-block;
+    height: 32px;
+    border-style: groove;
+    border-color: #70b1ee;
+    border-width: medium
+    padding-top: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+    padding-bottom: 0px;
+    border-radius: 10px;
+    background: white;
+}
+
+#reloadButton {
+    display: inline-block;
+    float: right;
+    margin-right: 18px;
+    border-style: groove;
+    border-color: #70b1ee;
+    border-width: medium;
+    border-radius: 10px;
+    background: white;
+}
+
+#content {
+    position: absolute;
+    top: 75px;
+    bottom: 0px;
+    width: 100%;
+}
+
+#scroller {
+    height: 100%;
+    width: 100%;
+}
+
+#progressSpinner {
     margin-left: auto;
     margin-right: auto;
     margin-top: 5%;
     margin-bottom: 5%;
 }
+
+#stationInfo .row {
+    border-bottom-style: solid;
+    border-color: #70b1ee;
+    border-width: thin;
+}
+

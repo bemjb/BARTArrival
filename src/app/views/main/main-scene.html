@@ -1,12 +1,15 @@
-<div id="main" class="palm-hasheader">
-    <div id="header" class="palm-header">BART Arrival Times</div>
-    <div id="stationSelector" class="palm-list">
-        <div class="palm-row-wrapper">
-            <div class="palm-row">
-                <div id="stations" name="stations" x-mojo-element="ListSelector"></div>
+<div id="main">
+    <div class="main-wrapper">
+        <div id="stationSelector">
+            <div id="stations" name="stations" x-mojo-element="ListSelector"></div>
+            <img id="reloadButton" src="images/reload.png" />
+            <div id="timestamp"></div>
+        </div>
+        <div id="content">
+            <div id="scroller" x-mojo-element="Scroller">
+                <div x-mojo-element="Spinner" id="progressSpinner"></div>
+                <div id="stationInfo" x-mojo-element="List"></div>
             </div>
         </div>
     </div>
-    <div x-mojo-element="Spinner" id="progressSpinner"></div>
-    <div id="stationInfo" x-mojo-element="List"></div>
 </div>

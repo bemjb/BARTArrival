@@ -54,7 +54,13 @@ MainAssistant.prototype.setup = function() {
     /* use Mojo.View.render to render view templates and add them to the scene, if needed */
     
     /* setup widgets here */
-    this.controller.setupWidget("stations", { label: "Station" }, this.stationModel);
+    StageAssistant.setupMenu(this.controller);
+
+    this.controller.setupWidget("stations", { label: "" }, this.stationModel);
+    this.controller.get("reloadButton").onclick = this.stationChange.bind(this);
+    this.timestampElement = this.controller.get("timestamp");
+
+    this.controller.setupWidget("stationInfoScroller", { mode: "vertical" }, { });
 
     this.controller.setupWidget(
         "stationInfo",
@@ -102,6 +108,7 @@ MainAssistant.prototype.locateClosestStation = function() {
 
 MainAssistant.prototype.stationChange = function(event) {
     var stationAbbr = this.stationModel.value;
+    this.clearTimestamp();
     this.startSpinner();
     if (stationAbbr == 'CLOSEST') {
         this.infoMessage("", "Acquiring current location to determine the closest station. If you do not wish to wait, you can select a station manually.");
@@ -110,7 +117,7 @@ MainAssistant.prototype.stationChange = function(event) {
     else {
         this.infoMessage("", "Getting train information for " + StationGeoLoc[this.stationModel.value].name);
         var req = new Ajax.Request(
-            "http://api.bart.gov/api/etd.aspx?cmd=etd&orig=" + stationAbbr + "&key=MW9S-E7SL-26DU-VV8V",
+            "http://api.bart.gov/api/etd.aspx?cmd=etd&orig=" + stationAbbr + "&key=EUS2-IHHG-U4GU-YBSI",
             {
                 method: "get",
                 evalJSON: false,
@@ -123,6 +130,9 @@ MainAssistant.prototype.stationChange = function(event) {
 
 MainAssistant.prototype.updateEtaDisplay = function(response) {
     var json = XML2JSON.convert(response.responseXML);
+
+    this.updateTimestamp(json.root[0].time[0], json.root[0].date[0]);
+
     var etds = json.root[0].station[0].etd;
     // sort by direction so that trains are grouped nicely in the display.
     etds.sort(function(a,b) {
@@ -229,6 +239,16 @@ MainAssistant.prototype.startSpinner = function() {
 MainAssistant.prototype.stopSpinner = function() {
     this.spinnerElement.mojo.stop();
     this.spinnerElement.style.display = 'none';
+};
+
+MainAssistant.prototype.updateTimestamp = function(time, date) {
+    // FIXME this should take the time and date and convert them to use the
+    // locale settings of the user.
+    this.timestampElement.innerHTML = 'Generated at ' + time + ' on ' + date;
+};
+
+MainAssistant.prototype.clearTimestamp = function() {
+    this.timestampElement.innerHTML = '&nbsp;';
 };
 
 MainAssistant.prototype.activate = function(event) {
