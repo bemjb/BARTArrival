@@ -133,34 +133,44 @@ MainAssistant.prototype.updateEtaDisplay = function(response) {
 
     this.updateTimestamp(json.root[0].time[0], json.root[0].date[0]);
 
-    var etds = json.root[0].station[0].etd;
-    // sort by direction so that trains are grouped nicely in the display.
-    etds.sort(function(a,b) {
-        // why direction is part of the estimate, I'll never know. You'd figure
-        // that if a train is going to a given destination, the direction will
-        // always be the same.
-        var aDir = a.estimate[0].direction[0];
-        var bDir = b.estimate[0].direction[0];
-        if (aDir == bDir) return 0;
-        else if (aDir > bDir) return 1;
-        else /* aDir < bDir */ return -1;
-    });
-    // actually build display
-    var listItems = etds.map(function(etd) {
-        var item = { };
-        item.dest = etd.destination[0];
-        item.info = "<ul>";
-        etd.estimate.forEach(function(estimate) {
-            item.info += "<li>" + estimate.minutes[0].escapeHTML() +
-                (estimate.minutes[0] == "Arrived"?", ":" mins, ") +
-                + estimate.length[0].escapeHTML() + " cars, platform " +
-                estimate.platform[0].escapeHTML() + "</li>";
+    if (json.root[0].station && json.root[0].station[0].etd) {
+        var etds = json.root[0].station[0].etd;
+        // sort by direction so that trains are grouped nicely in the display.
+        etds.sort(function(a,b) {
+            // why direction is part of the estimate, I'll never know. You'd figure
+            // that if a train is going to a given destination, the direction will
+            // always be the same.
+            var aDir = a.estimate[0].direction[0];
+            var bDir = b.estimate[0].direction[0];
+            if (aDir == bDir) return 0;
+            else if (aDir > bDir) return 1;
+            else /* aDir < bDir */ return -1;
         });
-        item.info += "</ul>";
-        return item;
-    });
-    this.stationInfoModel.items = listItems;
-    this.stationInfoModelChanged();
+        // actually build display
+        var listItems = etds.map(function(etd) {
+            var item = { };
+            item.dest = etd.destination[0];
+            item.info = "<ul>";
+            etd.estimate.forEach(function(estimate) {
+                item.info += "<li>" + estimate.minutes[0].escapeHTML() +
+                    (estimate.minutes[0] == "Arrived"?", ":" mins, ") +
+                    + estimate.length[0].escapeHTML() + " cars, platform " +
+                    estimate.platform[0].escapeHTML() + "</li>";
+            });
+            item.info += "</ul>";
+            return item;
+        });
+        this.stationInfoModel.items = listItems;
+        this.stationInfoModelChanged();
+    }
+    else {
+        // we don't have a valid etd, so look for a message or something
+        var message = "Unknown Error";
+        if (json.root[0].message && json.root[0].message[0].warning) {
+            message = "Server says: " + json.root[0].message[0].warning[0];
+        }
+        this.infoMessage("Could not get train times", message);
+    }
     this.stopSpinner();
 };
 

@@ -24,11 +24,14 @@ if ($all_stn->is_success) {
             my $info_doc = XML::Twig->new();
             $info_doc->parse($stn_info->content);
             my $info = $info_doc->root->first_child('stations')->first_child('station');
+            my $lat = 0+$info->first_child('gtfs_latitude')->trimmed_text;
+            my $lon = 0+$info->first_child('gtfs_longitude')->trimmed_text;
             $out->{$abbr} = {
                 'abbr' => $abbr,
                 'name' => $info->first_child('name')->trimmed_text,
-                'latitude' => 0+$info->first_child('gtfs_latitude')->trimmed_text,
-                'longitude' => 0+$info->first_child('gtfs_longitude')->trimmed_text,
+                'latitude' => $lat,
+                'longitude' => $lon,
+                'latLon' => "new LatLon($lat, $lon)",
             }
         }
         else {
