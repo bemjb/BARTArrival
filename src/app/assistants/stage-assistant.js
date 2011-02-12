@@ -30,7 +30,7 @@ StageAssistant.prototype.handleCommand = function(event) {
                 this.controller.showAlertDialog({
                     onChoose: function(value) {},
                     title: "BART Arrival",
-                    message: '<p>Copyright 2010, <a href="http://bem.jones-bey.org/">Bem Jones-Bey</a><br/>Reload icon by Matt Ball</p></div>',
+                    message: 'Simple application to display estimated arrival times for BART trains.<br />For help or feedback, please contact Bem Jones-Bey at <a href="mailto:bem@jones-bey.org">bem@jones-bey.org</a> or on Twitter at <a href="http://twitter.com/bemjb">http://twitter.com/bemjb</a>',
                     allowHTMLMessage: true,
                     choices:[
                         {label:"OK", value:""}

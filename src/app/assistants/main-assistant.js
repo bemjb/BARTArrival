@@ -25,7 +25,9 @@ function MainAssistant() {
         // 8: The application has been temporarily blacklisted.
         "This application has been blacklisted."
     ];
-    
+
+    this.refreshInterval = 60; // refresh every minute
+
     // Set up station model
     var choices = [];
     for (var abbr in StationGeoLoc) {
@@ -57,7 +59,6 @@ MainAssistant.prototype.setup = function() {
     StageAssistant.setupMenu(this.controller);
 
     this.controller.setupWidget("stations", { label: "" }, this.stationModel);
-    this.controller.get("reloadButton").onclick = this.stationChange.bind(this);
     this.timestampElement = this.controller.get("timestamp");
 
     this.controller.setupWidget("stationInfoScroller", { mode: "vertical" }, { });
@@ -85,10 +86,19 @@ MainAssistant.prototype.setup = function() {
     Mojo.Event.listen(
         this.controller.get("stations"),
         Mojo.Event.propertyChange,
-        this.stationChange.bind(this)
+        this.handleNewStationEvent.bind(this)
     );
 
-    this.locateClosestStation();
+    Mojo.Event.listen(
+        this.controller.document,
+        Mojo.Event.stageActivate,
+        this.handleActivateEvent.bind(this)
+    );
+    Mojo.Event.listen(
+        this.controller.document,
+        Mojo.Event.stageDeactivate,
+        this.handleDeactivateEvent.bind(this)
+    );
 };
 
 MainAssistant.prototype.locateClosestStation = function() {
@@ -106,26 +116,44 @@ MainAssistant.prototype.locateClosestStation = function() {
     });
 };
 
-MainAssistant.prototype.stationChange = function(event) {
-    var stationAbbr = this.stationModel.value;
-    this.clearTimestamp();
-    this.startSpinner();
-    if (stationAbbr == 'CLOSEST') {
+MainAssistant.prototype.handleNewStationEvent = function(event) {
+    this.disableRefresh();
+    if (this.stationModel.value == 'CLOSEST') {
         this.infoMessage("", "Acquiring current location to determine the closest station. If you do not wish to wait, you can select a station manually.");
         this.locateClosestStation();
     }
     else {
-        this.infoMessage("", "Getting train information for " + StationGeoLoc[this.stationModel.value].name);
-        var req = new Ajax.Request(
-            "http://api.bart.gov/api/etd.aspx?cmd=etd&orig=" + stationAbbr + "&key=EUS2-IHHG-U4GU-YBSI",
-            {
-                method: "get",
-                evalJSON: false,
-                onSuccess: this.updateEtaDisplay.bind(this),
-                onFailure: this.failedToGetEta.bind(this)
-            }
-        );
+        this.loadTrainInfo(true);
     }
+};
+
+MainAssistant.prototype.handleActivateEvent = function(event) {
+    this.handleNewStationEvent();
+};
+
+MainAssistant.prototype.handleDeactivateEvent = function(event) {
+    this.disableRefresh();
+};
+
+MainAssistant.prototype.loadTrainInfo = function(newStation) {
+    // just to be paranoid about it, make sure we don't refresh while refreshing
+    this.disableRefresh();
+    var stationAbbr = this.stationModel.value;
+    Mojo.Log.info("Getting train info for station %s", stationAbbr);
+    if (newStation) {
+        this.clearTimestamp();
+        this.startSpinner();
+        this.infoMessage("", "Getting train information for " + StationGeoLoc[this.stationModel.value].name);
+    }
+    var req = new Ajax.Request(
+        "http://api.bart.gov/api/etd.aspx?cmd=etd&orig=" + stationAbbr + "&key=EUS2-IHHG-U4GU-YBSI",
+        {
+            method: "get",
+            evalJSON: false,
+            onSuccess: this.updateEtaDisplay.bind(this),
+            onFailure: this.failedToGetEta.bind(this)
+        }
+    );
 };
 
 MainAssistant.prototype.updateEtaDisplay = function(response) {
@@ -167,11 +195,12 @@ MainAssistant.prototype.updateEtaDisplay = function(response) {
         // we don't have a valid etd, so look for a message or something
         var message = "Unknown Error";
         if (json.root[0].message && json.root[0].message[0].warning) {
-            message = "Server says: " + json.root[0].message[0].warning[0];
+            message = json.root[0].message[0].warning[0];
         }
-        this.infoMessage("Could not get train times", message);
+        this.infoMessage("There are no trains for this station", message);
     }
     this.stopSpinner();
+    this.enableRefresh();
 };
 
 MainAssistant.prototype.failedToGetEta = function(response) {
@@ -180,6 +209,7 @@ MainAssistant.prototype.failedToGetEta = function(response) {
         "<p>" + response.responseText.escapeHTML + "</p>"
     );
     this.stopSpinner();
+    this.enableRefresh();
 };
 
 MainAssistant.prototype.gotLocation = function(result) {
@@ -189,7 +219,7 @@ MainAssistant.prototype.gotLocation = function(result) {
         Mojo.Log.info("The closest station to %s is %j", latLon.toString('d'), station);
         this.stationModel.value = station.info.abbr;
         this.controller.modelChanged(this.stationModel);
-        this.stationChange();
+        this.loadTrainInfo(true);
     }
     // if the current station is set to something other than CLOSEST,
     // then the user has chosen a station manually, and doesn't want us to
@@ -254,19 +284,31 @@ MainAssistant.prototype.stopSpinner = function() {
 MainAssistant.prototype.updateTimestamp = function(time, date) {
     // FIXME this should take the time and date and convert them to use the
     // locale settings of the user.
-    this.timestampElement.innerHTML = 'Generated at ' + time + ' on ' + date;
+    this.timestampElement.innerHTML = 'Last updated at ' + time + ' on ' + date;
 };
 
 MainAssistant.prototype.clearTimestamp = function() {
     this.timestampElement.innerHTML = '&nbsp;';
 };
 
+MainAssistant.prototype.enableRefresh = function() {
+    if (!this.refreshEnabled) {
+        Mojo.Log.info("Scheduling refresh for %d seconds from now", this.refreshInterval);
+        this.refreshEnabled = this.loadTrainInfo.bind(this).delay(this.refreshInterval, false);
+    }
+};
+
+MainAssistant.prototype.disableRefresh = function() {
+    if (this.refreshEnabled) {
+        Mojo.Log.info("Disabling automatic refresh");
+        clearTimeout(this.refreshEnabled);
+        this.refreshEnabled = undefined;
+    }
+};
+
 MainAssistant.prototype.activate = function(event) {
     /* put in event handlers here that should only be in effect when this scene is active. For
        example, key handlers that are observing the document */
-
-    // Make sure the displayed data is up to date.
-    this.stationChange();
 };
 
 MainAssistant.prototype.deactivate = function(event) {
@@ -277,4 +319,19 @@ MainAssistant.prototype.deactivate = function(event) {
 MainAssistant.prototype.cleanup = function(event) {
     /* this function should do any cleanup needed before the scene is destroyed as 
        a result of being popped off the scene stack */
+    Mojo.Event.stopListening(
+        this.controller.get("stations"),
+        Mojo.Event.propertyChange,
+        this.handleNewStationEvent.bind(this)
+    );
+    Mojo.Event.stopListening(
+        this.controller.document,
+        Mojo.Event.stageActivate,
+        this.handleActivateEvent.bind(this)
+    );
+    Mojo.Event.stopListening(
+        this.controller.document,
+        Mojo.Event.stageDeactivate,
+        this.handleDeactivateEvent.bind(this)
+    );
 };
