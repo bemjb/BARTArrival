@@ -1,7 +1,7 @@
 {
 	"id": "com.pyen.bart.arrival",
-	"version": "0.6.0",
-	"vendor": "Pyen",
+	"version": "0.6.1",
+	"vendor": "Bem Jones-Bey",
 	"type": "web",
 	"main": "index.html",
 	"title": "BART Arrival",

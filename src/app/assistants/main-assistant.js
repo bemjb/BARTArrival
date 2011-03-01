@@ -108,7 +108,7 @@ MainAssistant.prototype.locateClosestStation = function() {
         method:"getCurrentPosition",
         parameters: {
             accuracy: 2,
-            maximumAge: 30,
+            maximumAge: 5,
             responseTime: 2
         },
         onSuccess: this.gotLocation.bind(this),
