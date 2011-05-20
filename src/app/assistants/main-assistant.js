@@ -88,6 +88,7 @@ MainAssistant.prototype.setup = function() {
         Mojo.Event.propertyChange,
         this.handleNewStationEvent.bind(this)
     );
+
 };
 
 MainAssistant.prototype.locateClosestStation = function() {
@@ -114,10 +115,6 @@ MainAssistant.prototype.handleNewStationEvent = function(event) {
     else {
         this.loadTrainInfo(true);
     }
-};
-
-MainAssistant.prototype.handleDeactivateEvent = function(event) {
-    this.disableRefresh();
 };
 
 MainAssistant.prototype.loadTrainInfo = function(newStation) {
@@ -295,6 +292,12 @@ MainAssistant.prototype.activate = function(event) {
     /* put in event handlers here that should only be in effect when this scene is active. For
        example, key handlers that are observing the document */
     this.handleNewStationEvent();
+
+    Mojo.Event.listen(
+        this.controller.document,
+        Mojo.Event.stageActivate,
+        this.loadTrainInfo.bind(this, false)
+    );
 };
 
 MainAssistant.prototype.deactivate = function(event) {
@@ -309,5 +312,10 @@ MainAssistant.prototype.cleanup = function(event) {
         this.controller.get("stations"),
         Mojo.Event.propertyChange,
         this.handleNewStationEvent.bind(this)
+    );
+    Mojo.Event.stopListening(
+        this.controller.document,
+        Mojo.Event.stageActivate,
+        this.loadTrainInfo.bind(this, false)
     );
 };
