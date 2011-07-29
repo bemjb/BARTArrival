@@ -23,19 +23,10 @@ StageAssistant.setupMenu = function(sceneController) {
 };
 
 StageAssistant.prototype.handleCommand = function(event) {
-    this.controller=Mojo.Controller.stageController.activeScene();
     if(event.type == Mojo.Event.command) {
         switch(event.command) {
             case 'about':
-                this.controller.showAlertDialog({
-                    onChoose: function(value) {},
-                    title: "BART Arrival",
-                    message: 'Simple application to display estimated arrival times for BART trains.<br />For help or feedback, please contact Bem Jones-Bey at <a href="mailto:bem@jones-bey.org">bem@jones-bey.org</a> or on Twitter at <a href="http://twitter.com/bemjb">http://twitter.com/bemjb</a>',
-                    allowHTMLMessage: true,
-                    choices:[
-                        {label:"OK", value:""}
-                    ]
-                });
+                this.controller.pushAppSupportInfoScene();
                 break;
         }
     }

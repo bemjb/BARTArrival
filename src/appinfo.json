@@ -1,9 +1,24 @@
 {
-	"id": "com.pyen.bart.arrival",
-	"version": "0.6.3",
-	"vendor": "Bem Jones-Bey",
-	"type": "web",
-	"main": "index.html",
-	"title": "BART Arrival",
-	"icon": "icon.png"
+    "id": "com.pyen.bart.arrival",
+    "version": "0.7.0",
+    "vendor": "Bem Jones-Bey",
+    "type": "web",
+    "main": "index.html",
+    "title": "BART Arrival",
+    "icon": "icon.png",
+    "smallicon": "smallicon.png",
+    "copyright": "Copyright 2010, 2011 Bem Jones-Bey",
+    "support": {
+        "email": {
+            "address": "bartarrival@pyen.com",
+            "subject": "Support"
+        },
+        "resources": [
+            {
+                "type": "web",
+                "label": "bemjb on Twitter",
+                "url": "http://twitter.com/bemjb"
+            }
+        ]
+    }
 }
